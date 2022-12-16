@@ -1,0 +1,59 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <graph edgedefault="directed">
+    <node id="front-end" />
+    <node id="orders" />
+    <node id="shipping" />
+    <node id="payment" />
+    <node id="carts" />
+    <node id="user" />
+    <node id="user-db" />
+    <node id="catalogue" />
+    <node id="catalogue-db" />
+    <node id="orders-db" />
+    <node id="carts-db" />
+    <node id="queue-master" />
+    <node id="rabbitmq" />
+    <node id="session-db" />
+    <node id="worker1" />
+    <node id="worker2" />
+    <edge source="front-end" target="worker2" />
+    <edge source="orders" target="front-end" />
+    <edge source="orders" target="shipping" />
+    <edge source="orders" target="worker1" />
+    <edge source="shipping" target="queue-master" />
+    <edge source="shipping" target="worker1" />
+    <edge source="payment" target="worker1" />
+    <edge source="carts" target="front-end" />
+    <edge source="carts" target="worker1" />
+    <edge source="user" target="front-end" />
+    <edge source="user" target="user-db" />
+    <edge source="user" target="worker1" />
+    <edge source="user-db" target="worker2" />
+    <edge source="catalogue" target="front-end" />
+    <edge source="catalogue" target="worker1" />
+    <edge source="catalogue-db" target="catalogue" />
+    <edge source="catalogue-db" target="worker1" />
+    <edge source="orders-db" target="orders" />
+    <edge source="orders-db" target="worker2" />
+    <edge source="carts-db" target="carts" />
+    <edge source="carts-db" target="worker2" />
+    <edge source="queue-master" target="worker1" />
+    <edge source="rabbitmq" target="worker1" />
+    <edge source="session-db" target="worker2" />
+    <edge source="worker1" target="orders" />
+    <edge source="worker1" target="payment" />
+    <edge source="worker1" target="carts" />
+    <edge source="worker1" target="user" />
+    <edge source="worker1" target="catalogue" />
+    <edge source="worker1" target="catalogue-db" />
+    <edge source="worker1" target="shipping" />
+    <edge source="worker1" target="queue-master" />
+    <edge source="worker1" target="rabbitmq" />
+    <edge source="worker2" target="front-end" />
+    <edge source="worker2" target="user-db" />
+    <edge source="worker2" target="orders-db" />
+    <edge source="worker2" target="carts-db" />
+    <edge source="worker2" target="session-db" />
+  </graph>
+</graphml>
