@@ -71,14 +71,24 @@ def get_host(network_graph: networkx.Graph, service: str) -> str:
     return [neighbour for neighbour in network_graph.neighbors(service) if "worker" in neighbour][0]
 
 
+def get_knowledge_graph(architecture_diagram_file_name: str, deployment_description_file_name: str) -> networkx.Graph:
+    knowledge_graph = read_architecture_from_xml("data/Architecture-Diagram.xml")
+    apply_deployment(knowledge_graph, 'data/deployment.yaml')
+    return knowledge_graph
+
+
+def plot_graph(plottable_graph: networkx.Graph):
+    color_map = ['red' if "worker" in node else "teal" for node in plottable_graph]
+    networkx.layout.spring_layout(plottable_graph)
+    networkx.draw_networkx(plottable_graph, node_color=color_map)
+    matplotlib.pyplot.show()
+
+
 if __name__ == '__main__':
     graph = read_architecture_from_xml("data/Architecture-Diagram.xml")
     apply_deployment(graph, 'data/deployment.yaml')
 
-    color_map = ['red' if "worker" in node else "teal" for node in graph]
-    networkx.layout.spring_layout(graph)
-    networkx.draw_networkx(graph, node_color=color_map)
-    matplotlib.pyplot.show()
+    plot_graph(graph)
 
     print(get_host(graph, "user-db"))
     move_service_to_host(graph, "user-db", "worker1")
