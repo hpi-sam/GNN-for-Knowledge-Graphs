@@ -98,6 +98,17 @@ if __name__ == '__main__':
     static_subgraph = sample_subgraph(knowledge_graph, "front-end", random_seed=12)
     knowledge_graph_utils.plot_graph(static_subgraph)
 
-    temporal_subgraphs = sample_temporal_subgraphs(static_subgraph, "front-end", num_sub_seeds=3)
-    # knowledge_graph_utils.plot_graph(temporal_subgraphs[len(temporal_subgraphs)])
+    # temporal_subgraphs1 = sample_temporal_subgraphs(static_subgraph, "front-end", num_sub_seeds=1)
+    # temporal_subgraphs2 = sample_temporal_subgraphs(static_subgraph, "front-end", num_sub_seeds=2)
+    temporal_subgraphs3 = sample_temporal_subgraphs(static_subgraph, "front-end", num_sub_seeds=3)
+
+    last_subgraph = temporal_subgraphs3[len(temporal_subgraphs3) - 1]
+    knowledge_graph_utils.plot_graph(last_subgraph)
+
+    for edge in last_subgraph.edges:
+        print(str(edge) + ": " + str(last_subgraph.get_edge_data(*edge)))
+
+    networkx.write_graphml_lxml(last_subgraph, 'data/Sock-shop-temporal.graphml', named_key_ids=True)
+
+    knowledge_graph_utils.plot_graph(temporal_subgraphs3)
     exit()

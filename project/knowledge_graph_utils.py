@@ -77,7 +77,7 @@ def get_knowledge_graph(architecture_diagram_file_name: str, deployment_descript
     return knowledge_graph
 
 
-def plot_graph(plottable_graph: networkx.Graph):
+def plot_graph(plottable_graph: networkx.Graph, has_edge_labels: bool = False):
     color_map = ['red' if "worker" in node else "teal" for node in plottable_graph]
     networkx.layout.spring_layout(plottable_graph)
     networkx.draw_networkx(plottable_graph, node_color=color_map)

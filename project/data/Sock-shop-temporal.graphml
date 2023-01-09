@@ -1,0 +1,55 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="timestep" for="edge" attr.name="timestep" attr.type="long" />
+  <graph edgedefault="directed">
+    <node id="front-end" />
+    <node id="worker2" />
+    <node id="user-db" />
+    <node id="orders-db" />
+    <node id="carts-db" />
+    <node id="session-db" />
+    <node id="orders" />
+    <node id="carts" />
+    <node id="shipping" />
+    <node id="worker1" />
+    <node id="queue-master" />
+    <node id="catalogue-db" />
+    <node id="catalogue" />
+    <edge source="front-end" target="worker2">
+      <data key="timestep">0</data>
+    </edge>
+    <edge source="worker2" target="user-db">
+      <data key="timestep">2</data>
+    </edge>
+    <edge source="worker2" target="orders-db">
+      <data key="timestep">1</data>
+    </edge>
+    <edge source="worker2" target="carts-db">
+      <data key="timestep">4</data>
+    </edge>
+    <edge source="worker2" target="session-db">
+      <data key="timestep">3</data>
+    </edge>
+    <edge source="orders-db" target="orders">
+      <data key="timestep">5</data>
+    </edge>
+    <edge source="carts-db" target="carts">
+      <data key="timestep">7</data>
+    </edge>
+    <edge source="orders" target="shipping">
+      <data key="timestep">6</data>
+    </edge>
+    <edge source="carts" target="worker1">
+      <data key="timestep">8</data>
+    </edge>
+    <edge source="shipping" target="queue-master">
+      <data key="timestep">9</data>
+    </edge>
+    <edge source="worker1" target="catalogue-db">
+      <data key="timestep">10</data>
+    </edge>
+    <edge source="catalogue-db" target="catalogue">
+      <data key="timestep">11</data>
+    </edge>
+  </graph>
+</graphml>
