@@ -1,0 +1,169 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d1" for="edge" attr.name="type" attr.type="string" />
+  <key id="d0" for="node" attr.name="type" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="front-end">
+      <data key="d0">service</data>
+    </node>
+    <node id="orders">
+      <data key="d0">service</data>
+    </node>
+    <node id="shipping">
+      <data key="d0">service</data>
+    </node>
+    <node id="payment">
+      <data key="d0">service</data>
+    </node>
+    <node id="carts">
+      <data key="d0">service</data>
+    </node>
+    <node id="user">
+      <data key="d0">service</data>
+    </node>
+    <node id="user-db">
+      <data key="d0">service</data>
+    </node>
+    <node id="catalogue">
+      <data key="d0">service</data>
+    </node>
+    <node id="catalogue-db">
+      <data key="d0">service</data>
+    </node>
+    <node id="orders-db">
+      <data key="d0">service</data>
+    </node>
+    <node id="carts-db">
+      <data key="d0">service</data>
+    </node>
+    <node id="queue-master">
+      <data key="d0">service</data>
+    </node>
+    <node id="rabbitmq">
+      <data key="d0">service</data>
+    </node>
+    <node id="session-db">
+      <data key="d0">service</data>
+    </node>
+    <node id="worker1">
+      <data key="d0">host</data>
+    </node>
+    <node id="worker2">
+      <data key="d0">host</data>
+    </node>
+    <edge source="front-end" target="worker2">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="orders" target="front-end">
+      <data key="d1">call</data>
+    </edge>
+    <edge source="orders" target="shipping">
+      <data key="d1">call</data>
+    </edge>
+    <edge source="orders" target="worker1">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="shipping" target="queue-master">
+      <data key="d1">call</data>
+    </edge>
+    <edge source="shipping" target="worker1">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="payment" target="worker1">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="carts" target="front-end">
+      <data key="d1">call</data>
+    </edge>
+    <edge source="carts" target="worker1">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="user" target="front-end">
+      <data key="d1">call</data>
+    </edge>
+    <edge source="user" target="user-db">
+      <data key="d1">call</data>
+    </edge>
+    <edge source="user" target="worker1">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="user-db" target="worker2">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="catalogue" target="front-end">
+      <data key="d1">call</data>
+    </edge>
+    <edge source="catalogue" target="worker1">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="catalogue-db" target="catalogue">
+      <data key="d1">call</data>
+    </edge>
+    <edge source="catalogue-db" target="worker1">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="orders-db" target="orders">
+      <data key="d1">call</data>
+    </edge>
+    <edge source="orders-db" target="worker2">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="carts-db" target="carts">
+      <data key="d1">call</data>
+    </edge>
+    <edge source="carts-db" target="worker2">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="queue-master" target="worker1">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="rabbitmq" target="worker1">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="session-db" target="worker2">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="worker1" target="orders">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="worker1" target="payment">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="worker1" target="carts">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="worker1" target="user">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="worker1" target="catalogue">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="worker1" target="catalogue-db">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="worker1" target="shipping">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="worker1" target="queue-master">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="worker1" target="rabbitmq">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="worker2" target="front-end">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="worker2" target="user-db">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="worker2" target="orders-db">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="worker2" target="carts-db">
+      <data key="d1">host</data>
+    </edge>
+    <edge source="worker2" target="session-db">
+      <data key="d1">host</data>
+    </edge>
+  </graph>
+</graphml>

@@ -17,7 +17,7 @@ def read_architecture_from_xml(filename) -> networkx.Graph:
             existing_nodes.add(vertex_id)
             network_graph.add_node(vertex_id, type='service')
 
-        if len(child) > 0:
+        if len(list(child)) > 0:
             for adjacent_vertex in child:
                 adjacent_vertex_id = adjacent_vertex.attrib["vertex"]
 
@@ -72,14 +72,18 @@ def get_host(network_graph: networkx.Graph, service: str) -> str:
 
 
 def get_knowledge_graph(architecture_diagram_file_name: str, deployment_description_file_name: str) -> networkx.Graph:
-    knowledge_graph = read_architecture_from_xml("data/Architecture-Diagram.xml")
-    apply_deployment(knowledge_graph, 'data/deployment.yaml')
+    knowledge_graph = read_architecture_from_xml(architecture_diagram_file_name)
+    apply_deployment(knowledge_graph, deployment_description_file_name)
     return knowledge_graph
 
 
-def plot_graph(plottable_graph: networkx.Graph, has_edge_labels: bool = False):
+def plot_graph(plottable_graph: networkx.Graph, has_edge_labels: bool = False, integer_labels: bool = False,
+               layout=networkx.layout.spring_layout):
     color_map = ['red' if "worker" in node else "teal" for node in plottable_graph]
-    pos = networkx.layout.spring_layout(plottable_graph, k=3**(1/2))
+    if integer_labels:
+        plottable_graph = networkx.convert_node_labels_to_integers(plottable_graph)
+    # pos = layout(plottable_graph, k=3 ** (1 / 2))
+    pos = layout(plottable_graph)
     networkx.draw_networkx(plottable_graph, pos, node_color=color_map)
     if has_edge_labels:
         edge_labels = {edge: plottable_graph.get_edge_data(*edge)["timestep"] for edge in plottable_graph.edges}

@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<cluster>
+    <!--vertex id="master" />
+    <vertex id="worker1">
+        <adjacent vertex="master" />
+    </vertex>
+    <vertex id="worker2">
+        <adjacent vertex="master" />
+    </vertex-->
+
+    <!-- Path I -->
+    <vertex id="queue-master" />
+    <vertex id="shipping">
+        <adjacent vertex="queue-master" />
+    </vertex>
+    <vertex id="orders">
+        <adjacent vertex="shipping" />
+    </vertex>
+    <vertex id="orders-db">
+        <adjacent vertex="orders" />
+    </vertex>
+    <!-- Path II -->
+    <vertex id="payment" />
+    <vertex id="carts">
+        <adjacent vertex="payment" />
+    </vertex>
+    <vertex id="carts-db">
+        <adjacent vertex="carts" />
+    </vertex>
+    <vertex id="catalogue">
+        <adjacent vertex="carts-db" />
+    </vertex>
+    <vertex id="catalogue-db">
+        <adjacent vertex="catalogue" />
+    </vertex>
+    <vertex id="front-end">
+        <adjacent vertex="catalogue-db" />
+    </vertex>
+    <!-- Path III -->
+    <vertex id="rabbitmq" />
+    <vertex id="user">
+        <adjacent vertex="rabbitmq" />
+    </vertex>
+    <vertex id="user-db">
+        <adjacent vertex="user" />
+    </vertex>
+    <vertex id="session-db">
+        <adjacent vertex="user-db" />
+    </vertex>
+</cluster>
