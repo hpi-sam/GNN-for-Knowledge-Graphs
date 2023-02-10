@@ -15,7 +15,7 @@ def read_architecture_from_xml(filename) -> networkx.Graph:
 
         if vertex_id not in existing_nodes:
             existing_nodes.add(vertex_id)
-            network_graph.add_node(vertex_id)
+            network_graph.add_node(vertex_id, type='service')
 
         if len(child) > 0:
             for adjacent_vertex in child:
@@ -23,9 +23,9 @@ def read_architecture_from_xml(filename) -> networkx.Graph:
 
                 if adjacent_vertex_id not in existing_nodes:
                     existing_nodes.add(adjacent_vertex_id)
-                    network_graph.add_node(adjacent_vertex_id)
+                    network_graph.add_node(adjacent_vertex_id, type='service')
 
-                network_graph.add_edge(vertex_id, adjacent_vertex_id)
+                network_graph.add_edge(vertex_id, adjacent_vertex_id, type="call")
 
     return network_graph
 
@@ -40,15 +40,15 @@ def apply_deployment(network_graph: networkx.Graph, filename: str):
                     host_name = document.get("metadata").get("name")
                     if host_name not in existing_hosts:
                         existing_hosts.add(host_name)
-                        network_graph.add_node(host_name)
+                        network_graph.add_node(host_name, type='host')
                 if document.get("kind") == 'Service':
                     service_name = document.get("metadata").get("name")
                     host_name = document.get("spec").get("selector").get("app.kubernetes.io/name")
                     if host_name not in existing_hosts:
                         existing_hosts.add(host_name)
                         network_graph.add_node(host_name)
-                    network_graph.add_edge(service_name, host_name)
-                    network_graph.add_edge(host_name, service_name)
+                    network_graph.add_edge(service_name, host_name, type="host")
+                    network_graph.add_edge(host_name, service_name, type="host")
     return network_graph
 
 
@@ -79,12 +79,15 @@ def get_knowledge_graph(architecture_diagram_file_name: str, deployment_descript
 
 def plot_graph(plottable_graph: networkx.Graph, has_edge_labels: bool = False):
     color_map = ['red' if "worker" in node else "teal" for node in plottable_graph]
-    networkx.layout.spring_layout(plottable_graph)
-    networkx.draw_networkx(plottable_graph, node_color=color_map)
+    pos = networkx.layout.spring_layout(plottable_graph, k=3**(1/2))
+    networkx.draw_networkx(plottable_graph, pos, node_color=color_map)
+    if has_edge_labels:
+        edge_labels = {edge: plottable_graph.get_edge_data(*edge)["timestep"] for edge in plottable_graph.edges}
+        networkx.draw_networkx_edge_labels(plottable_graph, pos, edge_labels=edge_labels)
     matplotlib.pyplot.show()
 
 
-if __name__ == '__main__':
+def main():
     graph = read_architecture_from_xml("data/Architecture-Diagram.xml")
     apply_deployment(graph, 'data/deployment.yaml')
 
@@ -100,4 +103,10 @@ if __name__ == '__main__':
     print("payment: " + get_host(graph, "payment"))
     print("session-db: " + get_host(graph, "session-db"))
 
-    networkx.write_graphml_lxml(graph, 'data/Sock-shop.graphml')
+    print('Nodes', graph.nodes['orders'])
+
+    networkx.write_graphml_lxml(graph, 'data/Sock-shop.graphml', named_key_ids=True)
+
+
+if __name__ == '__main__':
+    main()

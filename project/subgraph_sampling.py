@@ -4,7 +4,7 @@ import numpy
 import knowledge_graph_utils
 
 
-def sample_subgraph(super_graph, start_node: str, bfs_prob=0.5, max_nodes=None, random_seed=42) -> networkx.DiGraph():
+def sample_subgraph(super_graph, start_node: str, bfs_prob=0.5, max_nodes=None, random_seed=10) -> networkx.DiGraph():
     """
     Static subgraph sampling algorithm (Taken from "Exploring Spatio-Temporal Graphs
     as Means to Identify Failure Propagation")
@@ -13,7 +13,7 @@ def sample_subgraph(super_graph, start_node: str, bfs_prob=0.5, max_nodes=None, 
     """
     numpy.random.seed(random_seed)
     subgraph = networkx.DiGraph()
-    subgraph.add_node(start_node)
+    subgraph.add_node(start_node, **super_graph.nodes[start_node])
     nodes_to_visit = [start_node]
     if max_nodes is None:
         max_nodes = len(super_graph.nodes())
@@ -32,8 +32,10 @@ def sample_subgraph(super_graph, start_node: str, bfs_prob=0.5, max_nodes=None, 
             next_nodes = next_nodes[:num_nodes_to_add]
             nodes_to_visit += next_nodes
             for next_node in next_nodes:
-                subgraph.add_node(next_node)
+                subgraph.add_node(next_node, **super_graph.nodes[next_node])
                 subgraph.add_edge(node, next_node)
+                subgraph[node][next_node].update(super_graph.get_edge_data(node, next_node))
+
         if len(subgraph.nodes()) >= max_nodes:
             return subgraph
     return subgraph
@@ -92,23 +94,43 @@ def sample_temporal_subgraphs(super_graph, start_node, max_nodes=None, seed=nump
     return tn_subgraphs
 
 
-if __name__ == '__main__':
+def detect_interference(graph: networkx.Graph):
+    host_edges = (edge for edge in graph.edges if graph.get_edge_data(*edge).get('type') == 'host')
+    hosts = {node: {'incoming': 0, 'outgoing': 0} for node in graph.nodes if graph.nodes[node].get('type') == 'host'}
+    for edge in host_edges:
+        if edge[0] in hosts:
+            hosts[edge[0]]['incoming'] += 1
+        elif edge[1] in hosts:
+            hosts[edge[1]]['outgoing'] += 1
+
+    return any((True for host in hosts if hosts[host]['incoming'] and hosts[host]['outgoing']))
+
+
+def main():
     knowledge_graph = knowledge_graph_utils.get_knowledge_graph("data/Architecture-Diagram.xml", 'data/deployment.yaml')
+    start_node = "orders"
+    static_callgraph = sample_subgraph(knowledge_graph, start_node, random_seed=12)
+    # knowledge_graph_utils.plot_graph(static_callgraph)
 
-    static_subgraph = sample_subgraph(knowledge_graph, "front-end", random_seed=12)
-    knowledge_graph_utils.plot_graph(static_subgraph)
-
-    # temporal_subgraphs1 = sample_temporal_subgraphs(static_subgraph, "front-end", num_sub_seeds=1)
-    # temporal_subgraphs2 = sample_temporal_subgraphs(static_subgraph, "front-end", num_sub_seeds=2)
-    temporal_subgraphs3 = sample_temporal_subgraphs(static_subgraph, "front-end", num_sub_seeds=3)
+    temporal_subgraphs1 = sample_temporal_subgraphs(static_callgraph, start_node, num_sub_seeds=1)
+    temporal_subgraphs2 = sample_temporal_subgraphs(static_callgraph, start_node, num_sub_seeds=2)
+    temporal_subgraphs3 = sample_temporal_subgraphs(static_callgraph, start_node, num_sub_seeds=3)
 
     last_subgraph = temporal_subgraphs3[len(temporal_subgraphs3) - 1]
-    knowledge_graph_utils.plot_graph(last_subgraph)
+    # knowledge_graph_utils.plot_graph(last_subgraph, has_edge_labels=True)
 
     for edge in last_subgraph.edges:
         print(str(edge) + ": " + str(last_subgraph.get_edge_data(*edge)))
 
     networkx.write_graphml_lxml(last_subgraph, 'data/Sock-shop-temporal.graphml', named_key_ids=True)
 
-    knowledge_graph_utils.plot_graph(temporal_subgraphs3)
-    exit()
+    interference_subgraphs = [graph for graph in temporal_subgraphs2 if detect_interference(graph)]
+
+    # knowledge_graph_utils.plot_graph(temporal_subgraphs3[0])
+    print(len(temporal_subgraphs2), len(interference_subgraphs))
+    for graph in temporal_subgraphs2:
+        knowledge_graph_utils.plot_graph(graph, has_edge_labels=True)
+
+
+if __name__ == '__main__':
+    main()

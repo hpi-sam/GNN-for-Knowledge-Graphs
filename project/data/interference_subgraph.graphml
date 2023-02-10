@@ -1,0 +1,95 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="timestep" for="edge" attr.name="timestep" attr.type="long" />
+  <key id="type" for="edge" attr.name="type" attr.type="string" />
+  <key id="type" for="node" attr.name="type" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="session-db">
+      <data key="type">service</data>
+    </node>
+    <node id="worker2">
+      <data key="type">host</data>
+    </node>
+    <node id="front-end">
+      <data key="type">service</data>
+    </node>
+    <node id="user-db">
+      <data key="type">service</data>
+    </node>
+    <node id="orders-db">
+      <data key="type">service</data>
+    </node>
+    <node id="carts-db">
+      <data key="type">service</data>
+    </node>
+    <node id="orders">
+      <data key="type">service</data>
+    </node>
+    <node id="carts">
+      <data key="type">service</data>
+    </node>
+    <node id="shipping">
+      <data key="type">service</data>
+    </node>
+    <node id="worker1">
+      <data key="type">host</data>
+    </node>
+    <node id="queue-master">
+      <data key="type">service</data>
+    </node>
+    <node id="catalogue-db">
+      <data key="type">service</data>
+    </node>
+    <node id="catalogue">
+      <data key="type">service</data>
+    </node>
+    <edge source="session-db" target="worker2">
+      <data key="type">host</data>
+      <data key="timestep">0</data>
+    </edge>
+    <edge source="worker2" target="front-end">
+      <data key="type">host</data>
+      <data key="timestep">1</data>
+    </edge>
+    <edge source="worker2" target="user-db">
+      <data key="type">host</data>
+      <data key="timestep">5</data>
+    </edge>
+    <edge source="worker2" target="orders-db">
+      <data key="type">host</data>
+      <data key="timestep">3</data>
+    </edge>
+    <edge source="worker2" target="carts-db">
+      <data key="type">host</data>
+      <data key="timestep">2</data>
+    </edge>
+    <edge source="orders-db" target="orders">
+      <data key="type">call</data>
+      <data key="timestep">7</data>
+    </edge>
+    <edge source="carts-db" target="carts">
+      <data key="type">call</data>
+      <data key="timestep">4</data>
+    </edge>
+    <edge source="orders" target="shipping">
+      <data key="type">call</data>
+      <data key="timestep">10</data>
+    </edge>
+    <edge source="carts" target="worker1">
+      <data key="type">host</data>
+      <data key="timestep">6</data>
+    </edge>
+    <edge source="shipping" target="queue-master">
+      <data key="type">call</data>
+      <data key="timestep">11</data>
+    </edge>
+    <edge source="worker1" target="catalogue-db">
+      <data key="type">host</data>
+      <data key="timestep">8</data>
+    </edge>
+    <edge source="catalogue-db" target="catalogue">
+      <data key="type">call</data>
+      <data key="timestep">9</data>
+    </edge>
+  </graph>
+</graphml>
