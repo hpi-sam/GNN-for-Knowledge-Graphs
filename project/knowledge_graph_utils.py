@@ -5,7 +5,7 @@ import networkx
 import yaml
 
 
-def read_architecture_from_xml(filename) -> networkx.Graph:
+def read_architecture_from_xml(filename) -> networkx.DiGraph:
     tree = ElementTree.parse(filename)
     root = tree.getroot()
     network_graph = networkx.DiGraph()
@@ -71,7 +71,7 @@ def get_host(network_graph: networkx.Graph, service: str) -> str:
     return [neighbour for neighbour in network_graph.neighbors(service) if "worker" in neighbour][0]
 
 
-def get_knowledge_graph(architecture_diagram_file_name: str, deployment_description_file_name: str) -> networkx.Graph:
+def get_knowledge_graph(architecture_diagram_file_name: str, deployment_description_file_name: str) -> networkx.DiGraph:
     knowledge_graph = read_architecture_from_xml(architecture_diagram_file_name)
     apply_deployment(knowledge_graph, deployment_description_file_name)
     return knowledge_graph
