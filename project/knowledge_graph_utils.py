@@ -1,3 +1,4 @@
+import copy
 import xml.etree.ElementTree as ElementTree
 
 import matplotlib.pyplot
@@ -77,9 +78,29 @@ def get_knowledge_graph(architecture_diagram_file_name: str, deployment_descript
     return knowledge_graph
 
 
+def get_architecture_callgraph(knowledge_graph: networkx.DiGraph) -> networkx.DiGraph:
+    graph = copy.deepcopy(knowledge_graph)
+    for edge in knowledge_graph.edges:
+        if knowledge_graph.get_edge_data(*edge)['type'] == 'host':
+            graph.remove_edge(*edge)
+    for node in knowledge_graph.nodes:
+        if graph.nodes[node]['type'] == 'host':
+            graph.remove_node(node)
+    return graph
+
+
+def get_deployment_graph(knowledge_graph: networkx.DiGraph) -> networkx.DiGraph:
+    graph = copy.deepcopy(knowledge_graph)
+    for edge in knowledge_graph.edges:
+        if knowledge_graph.get_edge_data(*edge)['type'] == 'call':
+            graph.remove_edge(*edge)
+    return graph
+
+
 def plot_graph(plottable_graph: networkx.Graph, has_edge_labels: bool = False, integer_labels: bool = False,
-               layout=networkx.layout.spring_layout):
-    color_map = ['red' if "worker" in node else "teal" for node in plottable_graph]
+               layout=networkx.layout.spring_layout, color_map=None):
+    if not color_map:
+        color_map = ['red' if "worker" in node else "teal" for node in plottable_graph]
     if integer_labels:
         plottable_graph = networkx.convert_node_labels_to_integers(plottable_graph)
     # pos = layout(plottable_graph, k=3 ** (1 / 2))

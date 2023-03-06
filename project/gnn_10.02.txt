@@ -1,0 +1,18 @@
+orders-db -> oders -> shipping -> queue-master I
+
+front-end -> catalogue-db -> catalogue -> carts-db -> carts -> payment II
+
+session-db -> user-db -> user -> rabbitmq III
+
+change diagram so each path has its own color
+future: paths with multiple interferences
+ground truth (hand crafted):
+	how to generate
+	how to get distances to ground truth
+	how to rank
+	have one service to look at as the interesting one
+	how many examples of ground truth would we have?
+interference path -> reason could also be cascade
+ranking: Where should I intervene? -> Might make assumption: Only look at interference, not cascade (future work)
+Put temporal information on node instead of edge --> Use node2vec
+What would change using TransE? --> Related Work
