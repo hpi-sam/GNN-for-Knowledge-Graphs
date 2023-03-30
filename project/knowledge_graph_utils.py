@@ -98,8 +98,8 @@ def get_deployment_graph(knowledge_graph: networkx.DiGraph) -> networkx.DiGraph:
 
 
 def plot_graph(plottable_graph: networkx.Graph, has_edge_labels: bool = False, integer_labels: bool = False,
-               layout=networkx.layout.spring_layout, color_map=None):
-    if not color_map:
+               layout=networkx.layout.spring_layout, color_map=None, relabeled=False):
+    if not color_map and not relabeled:
         color_map = ['red' if "worker" in node else "teal" for node in plottable_graph]
     if integer_labels:
         plottable_graph = networkx.convert_node_labels_to_integers(plottable_graph)

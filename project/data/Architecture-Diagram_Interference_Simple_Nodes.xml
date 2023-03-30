@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<cluster>
+    <!--vertex id="master" />
+    <vertex id="worker1">
+        <adjacent vertex="master" />
+    </vertex>
+    <vertex id="worker2">
+        <adjacent vertex="master" />
+    </vertex-->
+
+    <!-- Path I -->
+    <vertex id="A3" />
+    <vertex id="A2">
+        <adjacent vertex="A3" />
+    </vertex>
+    <vertex id="A1">
+        <adjacent vertex="A2" />
+    </vertex>
+    <vertex id="A0">
+        <adjacent vertex="A1" />
+    </vertex>
+    <!-- Path II -->
+    <vertex id="B5" />
+    <vertex id="B4">
+        <adjacent vertex="B5" />
+    </vertex>
+    <vertex id="B3">
+        <adjacent vertex="B4" />
+    </vertex>
+    <vertex id="B2">
+        <adjacent vertex="B3" />
+    </vertex>
+    <vertex id="B1">
+        <adjacent vertex="B2" />
+    </vertex>
+    <vertex id="B0">
+        <adjacent vertex="B1" />
+    </vertex>
+    <!-- Path III -->
+    <vertex id="C3" />
+    <vertex id="C2">
+        <adjacent vertex="C3" />
+    </vertex>
+    <vertex id="C1">
+        <adjacent vertex="C2" />
+    </vertex>
+    <vertex id="C0">
+        <adjacent vertex="C1" />
+    </vertex>
+</cluster>
