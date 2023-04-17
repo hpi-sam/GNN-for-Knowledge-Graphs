@@ -1,35 +1,50 @@
+import math
 import pickle
+import random
 
 import networkx as nx
 import torch
 import torch_geometric.utils
 from matplotlib import pyplot as plt
+from numpy import dot
+from numpy.linalg import norm
 from torch_geometric.nn import GraphSAGE
+from torchmetrics.functional import retrieval_normalized_dcg
 
 
-def get_embedding(graph: torch_geometric.data.Data):
-    in_channels = -1
-    hidden_channels = 1
-    num_layers = 2
-    out_channels = 1
-    graph_sage = GraphSAGE(in_channels, hidden_channels, num_layers, out_channels=out_channels)
-    print(graph_sage)
-    node_features = graph.num_node_features
+def get_embedding(graph: torch_geometric.data.Data, model, query=('', '')):
+    graph_sage = model
+
     edge_index = graph.edge_index
     embedding = graph_sage.forward(graph.x, edge_index, edge_weight=graph.edge_weight)
 
     node_embeddings = {node: node_embedding.data for node, node_embedding in zip(graph.y, embedding)}
-    pass
+    graph_embedding_super = node_embeddings['super_node']
+    graph_embedding_average = (sum(node_embeddings.values()) - node_embeddings['super_node']) / (
+            len(node_embeddings) - 1)
+
+    query_embedding = (node_embeddings[query[0]], node_embeddings[query[1]]) if query[0] and query[1] else None
+
+    return graph_embedding_super, graph_embedding_average, query_embedding
 
 
-def convert_graph(graph: nx.DiGraph):
-    for node in graph.nodes(data=True):
+def convert_graph(graph: nx.DiGraph, keep_node_data=True):
+    graph = graph.copy()
+
+    for index, node in enumerate(graph.nodes(data=True)):
         node = node[-1]
-        features = torch.FloatTensor(list(node.values()))
+        if keep_node_data:
+            features = torch.FloatTensor(list(node.values()))
+        else:
+            features = torch.FloatTensor([1] + list(node.values())[-1:])
         node.clear()
         node['x'] = features
 
-    graph.add_node('super_node', x=torch.FloatTensor([0, len(graph.nodes), 1]))
+    if keep_node_data:
+        graph.add_node('super_node', x=torch.FloatTensor([0, len(graph.nodes), 1, 0.5]))
+    else:
+        graph.add_node('super_node', x=torch.FloatTensor([1.0, 0.5]))
+
     for node in graph.nodes:
         if node != 'super_node':
             graph.add_edge(node, 'super_node', weight=1, type='super')
@@ -57,18 +72,20 @@ def convert_graph(graph: nx.DiGraph):
     return torch_graph
 
 
-def stik_list_to_graph(graph: list, query, predicate, visualize=False) -> nx.DiGraph:
+def stik_list_to_graph(graph: list, identifiers, query, predicate, visualize=False, title="") -> nx.DiGraph:
     nx_graph = nx.DiGraph()
     existing_sources = []
     existing_targets = []
 
     for service in query:
         nx_graph.add_node(service['service'], starting_time=service['starting_time'],
-                          ending_time=service['ending_time'], resource_consumption=service['resource_consumption'])
+                          ending_time=service['ending_time'], resource_consumption=service['resource_consumption'],
+                          identifier=identifiers[service['service']])
         existing_sources.append(service['service'])
     for service in predicate:
         nx_graph.add_node(service['service'], starting_time=service['starting_time'],
-                          ending_time=service['ending_time'], resource_consumption=service['resource_consumption'])
+                          ending_time=service['ending_time'], resource_consumption=service['resource_consumption'],
+                          identifier=identifiers[service['service']])
         existing_targets.append(service['service'])
 
     for element in graph:
@@ -114,6 +131,50 @@ def stik_list_to_graph(graph: list, query, predicate, visualize=False) -> nx.DiG
     return nx_graph
 
 
+def get_position_without_embedding(stik, source_node, target_node):
+    sum_of_outgoing = 0
+    sum_of_incoming = 0
+    for source in stik:
+        if source:
+            sum_of_outgoing += sum([edge['probability'] for edge in source if
+                                    edge['source_node'] == source_node and edge['target_node'] == target_node])
+            sum_of_incoming += sum([edge['probability'] for edge in source if edge['target_node'] == target_node])
+
+    if sum_of_incoming == 0:
+        return 0
+
+    return sum_of_outgoing / sum_of_incoming
+
+
+def jaccard_similarity(data, ranking):
+    data_set = set((index, element['rank']) for index, element in enumerate(data))
+    ranking_set = set((index, element['rank']) for index, element in enumerate(ranking))
+    intersection = len(ranking_set.intersection(data_set))
+    union = len(ranking_set) + len(data_set) - intersection
+    return float(intersection / union)
+
+
+def cosine_similarity(data, ranking):
+    data_ranks = [element['rank'] for element in data]
+    ranking_ranks = [element['rank'] for element in ranking]
+    return dot(data_ranks, ranking_ranks) / (norm(data_ranks) * norm(ranking_ranks))
+
+
+def normalized_discounted_cumulative_gain(data, ranking):
+    rank_targets = torch.FloatTensor([element['rank'] for element in data])
+    rank_predictions = torch.FloatTensor([element['rank'] for element in ranking])
+    return retrieval_normalized_dcg(rank_predictions, rank_targets)
+
+
+def kendalltau_b(data, ranking):
+    pass
+
+
+def generate_random_node_identifiers(nodes):
+    random_node_identifiers = {node['service']: random.random() for node in nodes}
+    return random_node_identifiers
+
+
 def main():
     # ground_truth = gnn.pseudo_code_implementation()
     # with open('data/ground_truth.pickle', 'wb') as handle:
@@ -122,11 +183,90 @@ def main():
     with open('data/ground_truth.pickle', 'rb') as handle:
         ground_truth = pickle.load(handle)
 
-    stik_nx = stik_list_to_graph(ground_truth[('A0', 'B0')][0], ground_truth['query'], ground_truth['predicate'],
-                                 visualize=True)
-    pyg_graph = convert_graph(stik_nx)
+    in_channels = -1
+    hidden_channels = 2
+    num_layers = 4
+    out_channels = 1
+    graph_sage_model = GraphSAGE(in_channels, hidden_channels, num_layers, out_channels=out_channels)
+    graph_sage_model_timeless = GraphSAGE(in_channels, hidden_channels, num_layers, out_channels=out_channels)
 
-    get_embedding(pyg_graph)
+    # torch.save(graph_sage_model, 'data/model.pth')
+    # graph_sage_model = torch.load('data/model.pth')
+
+    SOURCE_NODE = 'A0'
+    TARGET_NODE = 'B0'
+    random_node_identifiers = generate_random_node_identifiers(ground_truth['query'] + ground_truth['predicate'])
+
+    super_node = {'jaccard': [], 'cosine': [], 'ndcg': []}
+    average = {'jaccard': [], 'cosine': [], 'ndcg': []}
+    timeless = {'jaccard': [], 'cosine': [], 'ndcg': []}
+    query = {'jaccard': [], 'cosine': [], 'ndcg': []}
+
+    for i in range(100):
+        print(f'Ranking #{i}/100')
+        graph_sage_model = GraphSAGE(in_channels, hidden_channels, num_layers, out_channels=out_channels)
+        graph_sage_model_timeless = GraphSAGE(in_channels, hidden_channels, num_layers, out_channels=out_channels)
+        data = []
+        for index, stik in enumerate(ground_truth[(SOURCE_NODE, TARGET_NODE)]):
+            position = get_position_without_embedding(stik, SOURCE_NODE, TARGET_NODE)
+
+            stik_nx = stik_list_to_graph(stik, random_node_identifiers, ground_truth['query'],
+                                         ground_truth['predicate'],
+                                         visualize=False, title=f'{index}')
+            pyg_graph = convert_graph(stik_nx)
+            pyg_graph_timeless = convert_graph(stik_nx, keep_node_data=False)
+
+            embedding, embedding_average, embedding_query = get_embedding(pyg_graph, graph_sage_model,
+                                                                          (SOURCE_NODE, TARGET_NODE))
+            embedding_timeless, _, _ = get_embedding(pyg_graph_timeless, graph_sage_model_timeless,
+                                                     (SOURCE_NODE, TARGET_NODE))
+
+            graph_data = {'rank': index, 'position': position, 'embedding': embedding,
+                          'embedding_average': embedding_average,
+                          'embedding_timeless': embedding_timeless,
+                          'embedding_query': embedding_query}
+            data.append(graph_data)
+            # print(f'Graph {index} done')
+
+        random_order = data.copy()
+        random.shuffle(random_order)
+
+        data_by_embedding = sorted(random_order, key=lambda x: abs(x['embedding'] - data[0]['embedding']))
+        data_by_embedding_timeless = sorted(random_order,
+                                            key=lambda x: abs(x['embedding_timeless'] - data[0]['embedding_timeless']))
+        data_by_embedding_average = sorted(random_order,
+                                           key=lambda x: abs(x['embedding_average'] - data[0]['embedding_average']))
+        data_by_embedding_query = sorted(random_order,
+                                         key=lambda x: abs(math.dist(x['embedding_query'], data[0]['embedding_query'])))
+
+        super_node['jaccard'].append(jaccard_similarity(data, data_by_embedding))
+        super_node['cosine'].append(cosine_similarity(data, data_by_embedding))
+        super_node['ndcg'].append(normalized_discounted_cumulative_gain(data, data_by_embedding).item())
+
+        average['jaccard'].append(jaccard_similarity(data, data_by_embedding_average))
+        average['cosine'].append(cosine_similarity(data, data_by_embedding_average))
+        average['ndcg'].append(normalized_discounted_cumulative_gain(data, data_by_embedding_average))
+
+        timeless['jaccard'].append(jaccard_similarity(data, data_by_embedding_timeless))
+        timeless['cosine'].append(cosine_similarity(data, data_by_embedding_timeless))
+        timeless['ndcg'].append(normalized_discounted_cumulative_gain(data, data_by_embedding_timeless))
+
+        query['jaccard'].append(jaccard_similarity(data, data_by_embedding_query))
+        query['cosine'].append(cosine_similarity(data, data_by_embedding_query))
+        query['ndcg'].append(normalized_discounted_cumulative_gain(data, data_by_embedding_query))
+
+    # Random identifier hurt
+    # Identifier by order hurt
+    with open('data/metrics/super_node.pickle', 'wb') as handle:
+        pickle.dump(super_node, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    with open('data/metrics/average.pickle', 'wb') as handle:
+        pickle.dump(average, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    with open('data/metrics/timeless.pickle', 'wb') as handle:
+        pickle.dump(timeless, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    with open('data/metrics/query.pickle', 'wb') as handle:
+        pickle.dump(query, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    pass
 
 
 if __name__ == '__main__':
