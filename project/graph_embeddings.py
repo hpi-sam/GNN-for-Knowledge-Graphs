@@ -1,3 +1,4 @@
+import copy
 import math
 import pickle
 import random
@@ -8,6 +9,7 @@ import torch_geometric.utils
 from matplotlib import pyplot as plt
 from numpy import dot
 from numpy.linalg import norm
+from scipy import stats
 from torch_geometric.nn import GraphSAGE
 from torchmetrics.functional import retrieval_normalized_dcg
 
@@ -167,12 +169,27 @@ def normalized_discounted_cumulative_gain(data, ranking):
 
 
 def kendalltau_b(data, ranking):
-    pass
+    x = [line['rank'] for line in data]
+    adjusted_ranking = get_adjusted_ranking(copy.deepcopy(ranking))
+    adjusted_ranking = sorted(adjusted_ranking, key=lambda e: e['position'], reverse=True)
+    y = [line['rank'] for line in adjusted_ranking]
+    res = stats.kendalltau(x, y)
+    return abs(res.statistic)
 
 
 def generate_random_node_identifiers(nodes):
     random_node_identifiers = {node['service']: random.random() for node in nodes}
     return random_node_identifiers
+
+
+def get_adjusted_ranking(ranking, metric='position'):
+    ranking[0]['rank'] = 0
+    for index, line in enumerate(ranking[1:]):
+        if line[metric] == ranking[index][metric]:
+            line['rank'] = ranking[index]['rank']
+        else:
+            line['rank'] = ranking[index]['rank'] + 1
+    return ranking
 
 
 def main():
@@ -197,13 +214,13 @@ def main():
     TARGET_NODE = 'B0'
     random_node_identifiers = generate_random_node_identifiers(ground_truth['query'] + ground_truth['predicate'])
 
-    super_node = {'jaccard': [], 'cosine': [], 'ndcg': []}
-    average = {'jaccard': [], 'cosine': [], 'ndcg': []}
-    timeless = {'jaccard': [], 'cosine': [], 'ndcg': []}
-    query = {'jaccard': [], 'cosine': [], 'ndcg': []}
+    super_node = {'jaccard': [], 'cosine': [], 'ndcg': [], 'kendalltau': []}
+    average = {'jaccard': [], 'cosine': [], 'ndcg': [], 'kendalltau': []}
+    timeless = {'jaccard': [], 'cosine': [], 'ndcg': [], 'kendalltau': []}
+    query = {'jaccard': [], 'cosine': [], 'ndcg': [], 'kendalltau': []}
 
     for i in range(100):
-        print(f'Ranking #{i}/100')
+        print(f'Ranking #{i+1}/100')
         graph_sage_model = GraphSAGE(in_channels, hidden_channels, num_layers, out_channels=out_channels)
         graph_sage_model_timeless = GraphSAGE(in_channels, hidden_channels, num_layers, out_channels=out_channels)
         data = []
@@ -228,6 +245,8 @@ def main():
             data.append(graph_data)
             # print(f'Graph {index} done')
 
+        adjusted_ranking = get_adjusted_ranking(copy.deepcopy(data))
+
         random_order = data.copy()
         random.shuffle(random_order)
 
@@ -242,18 +261,22 @@ def main():
         super_node['jaccard'].append(jaccard_similarity(data, data_by_embedding))
         super_node['cosine'].append(cosine_similarity(data, data_by_embedding))
         super_node['ndcg'].append(normalized_discounted_cumulative_gain(data, data_by_embedding).item())
+        super_node['kendalltau'].append(kendalltau_b(adjusted_ranking, data_by_embedding))
 
         average['jaccard'].append(jaccard_similarity(data, data_by_embedding_average))
         average['cosine'].append(cosine_similarity(data, data_by_embedding_average))
         average['ndcg'].append(normalized_discounted_cumulative_gain(data, data_by_embedding_average))
+        average['kendalltau'].append(kendalltau_b(adjusted_ranking, data_by_embedding_average))
 
         timeless['jaccard'].append(jaccard_similarity(data, data_by_embedding_timeless))
         timeless['cosine'].append(cosine_similarity(data, data_by_embedding_timeless))
         timeless['ndcg'].append(normalized_discounted_cumulative_gain(data, data_by_embedding_timeless))
+        timeless['kendalltau'].append(kendalltau_b(adjusted_ranking, data_by_embedding_timeless))
 
         query['jaccard'].append(jaccard_similarity(data, data_by_embedding_query))
         query['cosine'].append(cosine_similarity(data, data_by_embedding_query))
         query['ndcg'].append(normalized_discounted_cumulative_gain(data, data_by_embedding_query))
+        query['kendalltau'].append(kendalltau_b(adjusted_ranking, data_by_embedding_query))
 
     # Random identifier hurt
     # Identifier by order hurt

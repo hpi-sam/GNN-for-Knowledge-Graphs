@@ -155,6 +155,9 @@ def pseudo_code_implementation():
         'data/Architecture-Diagram_Interference_Simple_Nodes.xml',
         'data/deployment_Interference_Simple_Nodes.yaml')
 
+    architecture = knowledge_graph_utils.get_architecture_callgraph(knowledge_graph)
+    deployment = knowledge_graph_utils.get_deployment_graph(knowledge_graph)
+
     distinct_paths = interference_subgraph_generation.get_distinct_paths(
         knowledge_graph_utils.get_architecture_callgraph(knowledge_graph))
     colors = ['teal', 'purple', 'green']
@@ -166,6 +169,8 @@ def pseudo_code_implementation():
     color_map = ['red' if "worker" in node else path_map[node] for node in knowledge_graph]
 
     knowledge_graph_utils.plot_graph(knowledge_graph, layout=nx.layout.kamada_kawai_layout, color_map=color_map)
+    knowledge_graph_utils.plot_graph(architecture, layout=nx.layout.spring_layout)
+    knowledge_graph_utils.plot_graph(deployment, layout=nx.layout.planar_layout)
 
     query_predicate_stacks = generate_query_predicate_stacks(knowledge_graph, 'worker1')
 
@@ -314,7 +319,6 @@ def compare_graphs(a, b, source, target):
             return 1
         else:
             return -1
-    return 0
 
 
 if __name__ == '__main__':

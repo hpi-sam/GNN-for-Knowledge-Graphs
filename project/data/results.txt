@@ -1,0 +1,48 @@
+super_node - jaccard mean 0.010345048068605143 var 0.00012792064587139972
+super_node - cosine mean 0.8655063401615344 var 0.009409285711067335
+super_node - ndcg mean 0.8926803022623062 var 0.0025154574161097808
+super_node - kendalltau mean 0.625067331134695 var 0.1123454902265599
+
+average - jaccard mean 0.011418396617480876 var 0.00032058961635501713
+average - cosine mean 0.8328261247608063 var 0.01383599879916652
+average - ndcg mean 0.8879736 var 0.0036461363
+average - kendalltau mean 0.5461175281573272 var 0.11449733510871425
+
+timeless - jaccard mean 0.004975071054583132 var 2.2398023911339646e-05
+timeless - cosine mean 0.777884505144397 var 0.006251949176846894
+timeless - ndcg mean 0.8684654 var 0.0019697987
+timeless - kendalltau mean 0.20671210952765073 var 0.055144774757273626
+
+query - jaccard mean 0.010161501788804704 var 6.142661431666052e-05
+query - cosine mean 0.9133130341584055 var 0.005470858153691634
+query - ndcg mean 0.9293561 var 0.0026881122
+query - kendalltau mean 0.7399431202305979 var 0.07725998672121344
+
+
+kstest jaccard: super_node, average KstestResult(statistic=0.11, pvalue=0.5830090612540064, statistic_location=0.004784688995215311, statistic_sign=-1)
+kstest jaccard: super_node, timeless KstestResult(statistic=0.31, pvalue=0.00012016164291946694, statistic_location=0.004784688995215311, statistic_sign=-1)
+kstest jaccard: super_node, query KstestResult(statistic=0.15, pvalue=0.21117008625127576, statistic_location=0.009615384615384616, statistic_sign=1)
+kstest jaccard: average, timeless KstestResult(statistic=0.2, pvalue=0.03638428787491733, statistic_location=0.009615384615384616, statistic_sign=-1)
+kstest jaccard: average, query KstestResult(statistic=0.15, pvalue=0.21117008625127576, statistic_location=0.007194244604316547, statistic_sign=1)
+kstest jaccard: timeless, query KstestResult(statistic=0.35, pvalue=7.850159128072286e-06, statistic_location=0.007194244604316547, statistic_sign=1)
+
+kstest cosine: super_node, average KstestResult(statistic=0.15, pvalue=0.21117008625127576, statistic_location=0.8846947048680499, statistic_sign=-1)
+kstest cosine: super_node, timeless KstestResult(statistic=0.53, pvalue=3.35710076793659e-13, statistic_location=0.86813638565931, statistic_sign=-1)
+kstest cosine: super_node, query KstestResult(statistic=0.29, pvalue=0.0004117410017938115, statistic_location=0.8906516671370333, statistic_sign=1)
+kstest cosine: average, timeless KstestResult(statistic=0.41, pvalue=6.617357604827955e-08, statistic_location=0.8704000182708888, statistic_sign=-1)
+kstest cosine: average, query KstestResult(statistic=0.37, pvalue=1.7527190839835072e-06, statistic_location=0.8897723806152396, statistic_sign=1)
+kstest cosine: timeless, query KstestResult(statistic=0.7, pvalue=9.048888467758296e-24, statistic_location=0.86813638565931, statistic_sign=1)
+
+kstest ndcg: super_node, average KstestResult(statistic=0.11, pvalue=0.5830090612540064, statistic_location=0.8471114635467529, statistic_sign=-1)
+kstest ndcg: super_node, timeless KstestResult(statistic=0.4, pvalue=1.5550790371345692e-07, statistic_location=0.8715265989303589, statistic_sign=-1)
+kstest ndcg: super_node, query KstestResult(statistic=0.32, pvalue=6.281176788972264e-05, statistic_location=0.9268854260444641, statistic_sign=1)
+kstest ndcg: average, timeless KstestResult(statistic=0.34, pvalue=1.605714367105695e-05, statistic_location=0.8715266, statistic_sign=-1)
+kstest ndcg: average, query KstestResult(statistic=0.27, pvalue=0.0012935059781377376, statistic_location=0.87451094, statistic_sign=1)
+kstest ndcg: timeless, query KstestResult(statistic=0.56, pvalue=8.771130313572204e-15, statistic_location=0.8715266, statistic_sign=1)
+
+kstest kendalltau: super_node, average KstestResult(statistic=0.19, pvalue=0.05390207893129876, statistic_location=0.6776366477072765, statistic_sign=-1)
+kstest kendalltau: super_node, timeless KstestResult(statistic=0.59, pvalue=1.7671447393730104e-16, statistic_location=0.5456303433054245, statistic_sign=-1)
+kstest kendalltau: super_node, query KstestResult(statistic=0.37, pvalue=1.7527190839835072e-06, statistic_location=0.8534553568476706, statistic_sign=1)
+kstest kendalltau: average, timeless KstestResult(statistic=0.45, pvalue=1.7047967801006258e-09, statistic_location=0.23071489174111565, statistic_sign=-1)
+kstest kendalltau: average, query KstestResult(statistic=0.4, pvalue=1.5550790371345692e-07, statistic_location=0.8484629348797899, statistic_sign=1)
+kstest kendalltau: timeless, query KstestResult(statistic=0.74, pvalue=6.722276544772013e-27, statistic_location=0.5986793944394374, statistic_sign=1)
