@@ -193,7 +193,7 @@ def get_adjusted_ranking(ranking, metric='position'):
 
 
 def main():
-    # ground_truth = gnn.pseudo_code_implementation()
+    # ground_truth = gnn.main()
     # with open('data/ground_truth.pickle', 'wb') as handle:
     #     pickle.dump(ground_truth, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -204,14 +204,16 @@ def main():
     hidden_channels = 2
     num_layers = 4
     out_channels = 1
-    graph_sage_model = GraphSAGE(in_channels, hidden_channels, num_layers, out_channels=out_channels)
-    graph_sage_model_timeless = GraphSAGE(in_channels, hidden_channels, num_layers, out_channels=out_channels)
 
     # torch.save(graph_sage_model, 'data/model.pth')
     # graph_sage_model = torch.load('data/model.pth')
 
     SOURCE_NODE = 'A0'
     TARGET_NODE = 'B0'
+
+    NUMBER_OF_MODELS = 100
+    VISUALIZE = False  # Enabling visualization will make first ranking very costly but print all the STIKs
+
     random_node_identifiers = generate_random_node_identifiers(ground_truth['query'] + ground_truth['predicate'])
 
     super_node = {'jaccard': [], 'cosine': [], 'ndcg': [], 'kendalltau': []}
@@ -219,8 +221,12 @@ def main():
     timeless = {'jaccard': [], 'cosine': [], 'ndcg': [], 'kendalltau': []}
     query = {'jaccard': [], 'cosine': [], 'ndcg': [], 'kendalltau': []}
 
-    for i in range(100):
-        print(f'Ranking #{i+1}/100')
+    for i in range(NUMBER_OF_MODELS):
+
+        if i > 0 and VISUALIZE:
+            VISUALIZE = False
+
+        print(f'Ranking #{i + 1}/{NUMBER_OF_MODELS}')
         graph_sage_model = GraphSAGE(in_channels, hidden_channels, num_layers, out_channels=out_channels)
         graph_sage_model_timeless = GraphSAGE(in_channels, hidden_channels, num_layers, out_channels=out_channels)
         data = []
@@ -229,7 +235,7 @@ def main():
 
             stik_nx = stik_list_to_graph(stik, random_node_identifiers, ground_truth['query'],
                                          ground_truth['predicate'],
-                                         visualize=False, title=f'{index}')
+                                         visualize=VISUALIZE, title=f'{index}')
             pyg_graph = convert_graph(stik_nx)
             pyg_graph_timeless = convert_graph(stik_nx, keep_node_data=False)
 

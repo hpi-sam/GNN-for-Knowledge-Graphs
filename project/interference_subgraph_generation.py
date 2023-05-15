@@ -41,13 +41,13 @@ def is_interference_path(path: list, graph: nx.DiGraph, distinct_paths: list) ->
     return distinct_path_counter == 2
 
 
-def get_all_service_paths(graph: nx.DiGraph) -> list:
-    services = filter(lambda node: graph.nodes[node]['type'] == 'service', graph.nodes)
-    service_combinations = itertools.combinations(services, 2)
-    distinct_paths = get_distinct_paths(knowledge_graph_utils.get_architecture_callgraph(graph))
-    all_paths = []
-    for source, target in service_combinations:
-        paths = nx.all_simple_paths(graph, source, target)
-        paths = list(filter(lambda path: is_interference_path(path, graph, distinct_paths), paths))
-        all_paths.extend(paths)
-    return all_paths
+# def get_all_service_paths(graph: nx.DiGraph) -> list:
+#     services = filter(lambda node: graph.nodes[node]['type'] == 'service', graph.nodes)
+#     service_combinations = itertools.combinations(services, 2)
+#     distinct_paths = get_distinct_paths(knowledge_graph_utils.get_architecture_callgraph(graph))
+#     all_paths = []
+#     for source, target in service_combinations:
+#         paths = nx.all_simple_paths(graph, source, target)
+#         paths = list(filter(lambda path: is_interference_path(path, graph, distinct_paths), paths))
+#         all_paths.extend(paths)
+#     return all_paths

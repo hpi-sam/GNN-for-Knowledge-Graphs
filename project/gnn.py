@@ -5,152 +5,11 @@ from itertools import permutations, combinations
 import networkx as nx
 import numpy as np
 
-import graph_embeddings
 import interference_subgraph_generation
 import knowledge_graph_utils
 
 
 def main():
-    knowledge_graph = knowledge_graph_utils.get_knowledge_graph('data/Architecture-Diagram_Interference.xml',
-                                                                'data/deployment_Interference.yaml')
-
-    architecture = knowledge_graph_utils.get_architecture_callgraph(knowledge_graph)
-    deployment = knowledge_graph_utils.get_deployment_graph(knowledge_graph)
-
-    static_interference_paths = interference_subgraph_generation.get_all_service_paths(knowledge_graph)
-    # temporal_paths = create_temporal_callgraph(architecture)
-    temporal_paths = np.load('data/temporal_callgraph.npy', allow_pickle=True)
-
-    temporal_node_mapping = generate_temporal_node_mapping(static_interference_paths, temporal_paths)
-    spatio_temporal_graphs = generate_spatio_temporal_graphs(knowledge_graph, temporal_node_mapping)
-    spatio_temporal_graphs_interference_only = generate_spatio_temporal_graphs(knowledge_graph, temporal_node_mapping,
-                                                                               interference_edge_only=True)
-
-    distinct_paths = interference_subgraph_generation.get_distinct_paths(
-        knowledge_graph_utils.get_architecture_callgraph(knowledge_graph))
-    colors = ['teal', 'purple', 'green']
-    path_map = {}
-    for index, path in enumerate(distinct_paths):
-        assert len(colors) <= len(distinct_paths)
-        for node in path:
-            path_map[node] = colors[index]
-    color_map = ['red' if "worker" in node else path_map[node] for node in knowledge_graph]
-
-    knowledge_graph_utils.plot_graph(knowledge_graph, layout=nx.layout.kamada_kawai_layout, color_map=color_map)
-    knowledge_graph_utils.plot_graph(architecture, layout=nx.layout.spring_layout)
-    knowledge_graph_utils.plot_graph(deployment, layout=nx.layout.planar_layout)
-
-    example_graph = spatio_temporal_graphs[0]
-    nx.write_graphml(example_graph, 'data/spatio_temporal_graph_example.graphml', named_key_ids=True)
-
-    temporal_labels = {node: f'{time}:{node}' for node, time in nx.get_node_attributes(example_graph, 'time').items()}
-    relabeled_graph = nx.relabel_nodes(example_graph, temporal_labels)
-    knowledge_graph_utils.plot_graph(relabeled_graph, layout=nx.layout.kamada_kawai_layout)
-
-    example_graph_interference_only = spatio_temporal_graphs_interference_only[0]
-    temporal_labels_interference_only = {node: f'{time}:{node}' for node, time in
-                                         nx.get_node_attributes(example_graph_interference_only, 'time').items()}
-    relabeled_graph_interference_only = nx.relabel_nodes(example_graph_interference_only,
-                                                         temporal_labels_interference_only)
-    knowledge_graph_utils.plot_graph(relabeled_graph_interference_only, layout=nx.layout.kamada_kawai_layout)
-
-    pass
-
-
-def generate_temporal_node_mapping(static_interference_graphs, temporal_call_graphs):
-    temporal_node_mapping = set()
-    for static_graph in static_interference_graphs:
-        services = tuple(filter(lambda node: 'worker' not in node, static_graph))
-        worker = [(index, node) for index, node in enumerate(static_graph) if 'worker' in node][0]
-        valid_paths = tuple(filter(lambda possible_path: set(services).issubset(possible_path), temporal_call_graphs))
-        for path in valid_paths:
-            path = list(path)
-            node_after_worker = static_graph[worker[0] + 1]
-            node_before_worker = static_graph[worker[0] - 1]
-            if path.index(node_before_worker) < path.index(node_after_worker):
-                path.insert(path.index(node_after_worker), worker[1])
-                temporal_node_map = tuple(
-                    (node, time, node == node_before_worker or node == node_after_worker) for time, node in
-                    enumerate(path))
-                temporal_node_mapping.add(temporal_node_map)
-
-    with open('data/mappings.npy', 'wb') as outfile:
-        np.save(outfile, np.array(list(temporal_node_mapping), dtype=object))
-    return temporal_node_mapping
-
-
-def generate_spatio_temporal_graphs(knowledge_graph: nx.DiGraph, temporal_node_mapping,
-                                    interference_edge_only: bool = False) -> list[nx.DiGraph]:
-    spatio_temporal_graphs = []
-    for temporal_node_map in temporal_node_mapping:
-        temporal_node_dict = {node: time for node, time, _ in temporal_node_map}
-        if interference_edge_only:
-            interference_node_dict = {node: interference for node, _, interference in temporal_node_map}
-        spatio_temporal_graph = nx.DiGraph(knowledge_graph)
-        for node in knowledge_graph.nodes:
-            if node in temporal_node_dict:
-                spatio_temporal_graph.nodes[node]['time'] = temporal_node_dict[node]
-            else:
-                spatio_temporal_graph.remove_node(node)
-
-        if interference_edge_only:
-            for edge in nx.DiGraph(spatio_temporal_graph).edges:
-                if 'worker' in edge[0]:
-                    if edge[1] not in interference_node_dict or not interference_node_dict[edge[1]]:
-                        spatio_temporal_graph.remove_edge(*edge)
-                elif 'worker' in edge[1]:
-                    if edge[0] not in interference_node_dict or not interference_node_dict[edge[0]]:
-                        spatio_temporal_graph.remove_edge(*edge)
-
-        spatio_temporal_graphs.append(spatio_temporal_graph)
-
-    return spatio_temporal_graphs
-
-
-def create_temporal_callgraph(call_graph: nx.DiGraph, file_suffix: str = ""):
-    paths = interference_subgraph_generation.get_distinct_paths(call_graph)
-    temporal_paths = []
-    for combination in combinations(paths, 2):
-        temporal_paths.extend(permute_paths(*combination))
-    with open(f'data/temporal_callgraph{file_suffix}.npy', 'wb') as outfile:
-        np.save(outfile, np.array(temporal_paths, dtype=object))
-    return temporal_paths
-
-
-def permute_paths(a, b):
-    '''Find all possible permutations for order of calls in two paths'''
-    concatenated = a + b
-    result = []
-    for permutation in permutations(concatenated):
-        valid_permutation = True
-        iter_a = 0
-        iter_b = 0
-        for element in permutation:
-            if element in a:
-                if a.index(element) < iter_a:
-                    valid_permutation = False
-                    break
-                iter_a = a.index(element)
-            if element in b:
-                if b.index(element) < iter_b:
-                    valid_permutation = False
-                    break
-                iter_b = b.index(element)
-        if valid_permutation:
-            result.append(permutation)
-    return result
-
-
-def embedding():
-    knowledge_graph = knowledge_graph_utils.get_knowledge_graph('data/Architecture-Diagram_Interference.xml',
-                                                                'data/deployment_Interference.yaml')
-
-    graph_embeddings.get_embedding(knowledge_graph)
-
-    knowledge_graph_utils.plot_graph(knowledge_graph, layout=nx.layout.kamada_kawai_layout)
-
-
-def pseudo_code_implementation():
     knowledge_graph = knowledge_graph_utils.get_knowledge_graph(
         'data/Architecture-Diagram_Interference_Simple_Nodes.xml',
         'data/deployment_Interference_Simple_Nodes.yaml')
@@ -224,6 +83,40 @@ def generate_query_predicate_stacks(knowledge_graph, host_node):
         query_predicate_stacks.append({'query': query, 'predicate': predicate})
 
     return query_predicate_stacks
+
+
+def create_temporal_callgraph(call_graph: nx.DiGraph, file_suffix: str = ""):
+    paths = interference_subgraph_generation.get_distinct_paths(call_graph)
+    temporal_paths = []
+    for combination in combinations(paths, 2):
+        temporal_paths.extend(permute_paths(*combination))
+    with open(f'data/temporal_callgraph{file_suffix}.npy', 'wb') as outfile:
+        np.save(outfile, np.array(temporal_paths, dtype=object))
+    return temporal_paths
+
+
+def permute_paths(a, b):
+    """Find all possible permutations for order of calls in two paths"""
+    concatenated = a + b
+    result = []
+    for permutation in permutations(concatenated):
+        valid_permutation = True
+        iter_a = 0
+        iter_b = 0
+        for element in permutation:
+            if element in a:
+                if a.index(element) < iter_a:
+                    valid_permutation = False
+                    break
+                iter_a = a.index(element)
+            if element in b:
+                if b.index(element) < iter_b:
+                    valid_permutation = False
+                    break
+                iter_b = b.index(element)
+        if valid_permutation:
+            result.append(permutation)
+    return result
 
 
 def compute_list_of_impacted_pairs(source_stack, target_stack):
@@ -322,4 +215,5 @@ def compare_graphs(a, b, source, target):
 
 
 if __name__ == '__main__':
-    pseudo_code_implementation()
+    main()
+    print("DONE!")
